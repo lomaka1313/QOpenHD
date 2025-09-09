@@ -7,11 +7,6 @@
 #include <QFontDatabase>
 #if defined(__android__)
 #include <QtAndroid>
-const QVector<QString> permissions({"android.permission.INTERNET",
-                                    "android.permission.WRITE_EXTERNAL_STORAGE",
-                                    "android.permission.READ_EXTERNAL_STORAGE",
-                                    "android.permission.ACCESS_NETWORK_STATE",
-                                    "android.permission.ACCESS_FINE_LOCATION"});
 #endif
 
 #include "telemetry/models/fcmavlinksystem.h"
@@ -24,6 +19,7 @@ const QVector<QString> permissions({"android.permission.INTERNET",
 #include "telemetry/models/wificard.h"
 #include "telemetry/MavlinkTelemetry.h"
 #include "telemetry/models/rcchannelsmodel.h"
+#include "telemetry/models/markermodel.h"
 #include "telemetry/settings/mavlinksettingsmodel.h"
 #include "telemetry/settings/wblinksettingshelper.h"
 #include "telemetry/settings/frequencyhelper.h"
@@ -34,6 +30,10 @@ const QVector<QString> permissions({"android.permission.INTERNET",
 #include "osd/horizonladder.h"
 #include "osd/flightpathvector.h"
 #include "osd/aoagauge.h"
+#include "adsb/adsbvehicle.h"
+#include "adsb/adsbvehiclemanager.h"
+#include "adsb/qmlobjectlistmodel.h"
+
 
 // Video - annyoing ifdef crap is needed for all the different platforms / configurations
 #include "decodingstatistcs.h"
@@ -43,13 +43,13 @@ const QVector<QString> permissions({"android.permission.INTERNET",
 #ifdef QOPENHD_ENABLE_GSTREAMER_QMLGLSINK
 #include "videostreaming/gstreamer/gst_helper.hpp"
 #include "videostreaming/gstreamer/gstqmlglsinkstream.h"
-#include "videostreaming/gstreamer/gstrtpaudioplayer.h"
 #endif //QOPENHD_ENABLE_GSTREAMER_QMLGLSINK
 #ifdef QOPENHD_ENABLE_VIDEO_VIA_ANDROID
 #include <videostreaming/android/qandroidmediaplayer.h>
 #include <videostreaming/android/qsurfacetexture.h>
 #endif
 #include "videostreaming/vscommon/QOpenHDVideoHelper.hpp"
+#include "videostreaming/vscommon/audio_playback.h"
 // Video end
 
 #include "util/qrenderstats.h"
@@ -65,6 +65,14 @@ const QVector<QString> permissions({"android.permission.INTERNET",
 #include "util/WorkaroundMessageBox.h"
 #include "util/restartqopenhdmessagebox.h"
 
+#if defined(OPENSSL_VERSION_MAJOR) && OPENSSL_VERSION_MAJOR >= 3
+RESOLVEFUNC(SSL_get1_peer_certificate);
+RESOLVEFUNC(EVP_PKEY_get_base_id);
+#endif // OPENSSL_VERSION_MAJOR >= 3
+
+//#include <qpa/qplatformnativeinterface.h>
+//#include <xf86drm.h>
+//#include <xf86drmMode.h>
 
 // Load all the fonts we use ?!
 static void load_fonts(){
@@ -173,6 +181,11 @@ static void write_platform_context_properties(QQmlApplicationEngine& engine){
 
 static void android_check_permissions(){
 #if defined(__android__)
+    const QVector<QString> permissions({"android.permission.INTERNET",
+                                        "android.permission.WRITE_EXTERNAL_STORAGE",
+                                        "android.permission.READ_EXTERNAL_STORAGE",
+                                        "android.permission.ACCESS_NETWORK_STATE",
+                                        "android.permission.ACCESS_FINE_LOCATION"});
     qDebug()<<"Android request permissions";
     for(const QString &permission : permissions) {
         auto result = QtAndroid::checkPermission(permission);
@@ -186,6 +199,39 @@ static void android_check_permissions(){
     }
 #endif
 }
+
+/*static void debug_kms(){
+    qDebug()<<"platform name:"<<QGuiApplication::platformName();
+    if(QGuiApplication::platformName().contains("eglfs", Qt::CaseInsensitive)){
+        int fd = 0;
+        uint32_t crtc = 0;
+        uint32_t connector = 0;
+        bool useatomic = false;
+        auto * pni = QGuiApplication::platformNativeInterface();
+        QScreen *qScreen=QGuiApplication::primaryScreen();
+        auto * drifd = pni->nativeResourceForIntegration("dri_fd");
+        if (drifd)
+            fd = static_cast<int>(reinterpret_cast<qintptr>(drifd));
+        auto * crtcid = pni->nativeResourceForScreen("dri_crtcid", qScreen);
+        if (crtcid)
+            crtc = static_cast<uint32_t>(reinterpret_cast<qintptr>(crtcid));
+        auto * connid = pni->nativeResourceForScreen("dri_connectorid", qScreen);
+        if (connid)
+            connector = static_cast<uint32_t>(reinterpret_cast<qintptr>(connid));
+        auto * atomic = pni->nativeResourceForIntegration("dri_atomic_request");
+        if (atomic){
+            //auto * request = reinterpret_cast<drmModeAtomicReq*>(atomic);
+            auto * request = atomic;
+            if (request != nullptr)
+                useatomic = true;
+        }
+        qDebug()<<QString("%1 Qt EGLFS/KMS Fd:%2 Crtc id:%3 Connector id:%4 Atomic: %5")
+                        .arg("xx").arg(fd).arg(crtc).arg(connector).arg(useatomic);
+    }else{
+        qDebug()<<"No eglfs";
+    }
+}*/
+
 
 int main(int argc, char *argv[]) {
 
@@ -293,6 +339,9 @@ int main(int argc, char *argv[]) {
     qmlRegisterType<FlightPathVector>("OpenHD", 1, 0, "FlightPathVector");
     qmlRegisterType<AoaGauge>("OpenHD", 1, 0, "AoaGauge");
 
+
+    qmlRegisterUncreatableType<QmlObjectListModel>("OpenHD", 1, 0, "QmlObjectListModel", "Reference only");
+
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("_qopenhd", &QOpenHD::instance());
     QOpenHD::instance().setEngine(&engine);
@@ -338,6 +387,12 @@ int main(int argc, char *argv[]) {
     engine.rootContext()->setContextProperty("_wifi_card_gnd2", &WiFiCard::instance_gnd(2));
     engine.rootContext()->setContextProperty("_wifi_card_gnd3", &WiFiCard::instance_gnd(3));
     engine.rootContext()->setContextProperty("_wifi_card_air", &WiFiCard::instance_air());
+    auto adsbVehicleManager = ADSBVehicleManager::instance();
+    engine.rootContext()->setContextProperty("AdsbVehicleManager", adsbVehicleManager);
+    adsbVehicleManager->onStarted();
+    // video - a bit special
+    engine.rootContext()->setContextProperty("_decodingStatistics",&DecodingStatistcs::instance());
+
     // And then the main part
     engine.rootContext()->setContextProperty("_mavlinkTelemetry", &MavlinkTelemetry::instance());
 
@@ -380,10 +435,8 @@ int main(int argc, char *argv[]) {
 #else
      engine.rootContext()->setContextProperty("QOPENHD_ENABLE_VIDEO_VIA_ANDROID", QVariant(false));
 #endif
-    //GstRtpAudioPlayer::instance().start_playing();
+    platform_start_audio_streaming_if_enabled();
 // Platform - dependend video end  -----------------------------------------------------------------
-
-    engine.rootContext()->setContextProperty("_decodingStatistics",&DecodingStatistcs::instance());
 
     // This allows to use the defines as strings in qml
     engine.rootContext()->setContextProperty("QOPENHD_GIT_VERSION",
@@ -401,7 +454,16 @@ int main(int argc, char *argv[]) {
 #endif
      );
 
-    engine.load(QUrl(QLatin1String("qrc:/main.qml")));
+    //engine.load(QUrl(QLatin1String("qrc:/main.qml")));
+    //const QUrl url("qrc:/qt/qml/hello/qml/main.qml");
+    //const QUrl url(QStringLiteral("qrc:/qt/qml/main.qml"));
+    //const QUrl url(QStringLiteral("qrc:/qml/main.qml"));
+    const QUrl url(QStringLiteral("qrc:/main.qml"));
+    engine.load(url);
+    //engine.loadFromModule("QOpenHD", "qrc:/main.qml");
+    //engine.loadFromModule("QOpenHDApp","qrc:/main.qml");
+    //engine.load("qml/main.qml");
+    //engine.loadFromModule("QOpenHD", "MainX");
 
 #if defined(__android__)
     QtAndroid::hideSplashScreen();
@@ -412,10 +474,12 @@ int main(int argc, char *argv[]) {
     MavlinkTelemetry::instance().start();
 
     QRenderStats::instance().register_to_root_window(engine);
+    //debug_kms();
     LogMessagesModel::instanceGround().addLogMessage("QOpenHD","running");
     const int retval = app.exec();
     // Terminating needs a bit of special care due to the singleton usage and threads
     qDebug()<<"Terminating";
     MavlinkTelemetry::instance().terminate();
+    platform_audio_terminate();
     return retval;
 }

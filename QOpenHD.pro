@@ -72,6 +72,8 @@ QT +=core quick qml gui \
     widgets
 QT += opengl
 QT += charts
+#QT += gui-private
+#LIBS += Ldrm
 
 INCLUDEPATH += $$PWD/lib
 INCLUDEPATH += $$PWD/app
@@ -101,6 +103,9 @@ LinuxBuild {
 
 # All Generic files / files that literally have 0!! dependencies other than qt
 SOURCES += \
+    app/adsb/adsbvehicle.cpp \
+    app/adsb/adsbvehiclemanager.cpp \
+    app/adsb/qmlobjectlistmodel.cpp \
     app/logging/hudlogmessagesmodel.cpp \
     app/logging/logmessagesmodel.cpp \
     app/util/mousehelper.cpp \
@@ -111,10 +116,13 @@ SOURCES += \
     app/main.cpp \
 
 HEADERS += \
+    app/adsb/adsbvehicle.h \
+    app/adsb/adsbvehiclemanager.h \
+    app/adsb/qmlobjectlistmodel.h \
+    app/common/ThreadsafeQueue.hpp \
     app/common/util_fs.h \
     app/common/StringHelper.hpp \
     app/common/TimeHelper.hpp \
-    app/common/Helper.hpp \
     app/logging/hudlogmessagesmodel.h \
     app/logging/loghelper.h \
     app/logging/logmessagesmodel.h \
@@ -123,6 +131,7 @@ HEADERS += \
     app/util/WorkaroundMessageBox.h \
     app/util/qrenderstats.h \
     app/util/restartqopenhdmessagebox.h \
+    app/util/lqutils_include.h \
 
 
 # Geographic lib updated to c-2.0, so much cleaner
@@ -168,18 +177,6 @@ DISTFILES += \
     android/res/values/libs.xml \
     android/res/values/styles.xml \
     android/src/QOpenHDActivity.java \
-    android/src/SurfaceTextureListener.java \
-    android/src/org/freedesktop/gstreamer/androidmedia/GstAhcCallback.java \
-    android/src/org/freedesktop/gstreamer/androidmedia/GstAhsCallback.java \
-    android/src/org/freedesktop/gstreamer/androidmedia/GstAmcOnFrameAvailableListener.java \
-    android/src/org/openhd/IsConnected.java \
-    android/src/org/openhd/LiveVideoPlayerWrapper.java \
-    app/telemetry/telemetry.pri \
-    app/videostreaming/gst_qmlglsink/gst_video.pri \
-    app/videostreaming/vscommon/vscommon.pri \
-    app/vs_android/videostreamingandroid.pri \
-    extra_build_qmake.sh \
-    lib/h264nal/h264nal.pri \
     qml/qtquickcontrols2.conf \
     qml/ui/qmldir \
 
@@ -213,6 +210,7 @@ iOSBuild {
 }
 
 MacBuild {
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.15
     QMAKE_INFO_PLIST = mac/Info.plist
     ICON = $${BASEDIR}/icons/macos.icns
     DISTFILES += mac/Info.plist

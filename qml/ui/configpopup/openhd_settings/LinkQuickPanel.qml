@@ -3,9 +3,9 @@ import QtQuick 2.0
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
-import QtQuick.Dialogs 1.0
+
 import QtQuick.Controls.Material 2.12
-import QtQuick.Controls.Styles 1.4
+ 
 
 import Qt.labs.settings 1.0
 
@@ -146,6 +146,7 @@ Rectangle{
                 SettingsCategory{
                     m_description: "FREQUENCY / TOOLKIT"
                     spacing: 1
+                    m_hide_elements: false;
 
                     Row{
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -225,6 +226,14 @@ Rectangle{
                             }
                             TabButton{
                                 text: "2.4G"
+                                enabled: {
+                                    if(_ohdSystemAir.is_alive && _ohdSystemAir.ohd_platform_type==30){
+                                        // X20 does not support 2.4G
+                                        return false;
+                                    }
+                                    return true;
+
+                                }
                             }
                             TabButton{
                                 text: "5.8G"
@@ -235,7 +244,7 @@ Rectangle{
                     Layout.alignment: Qt.AlignRight
                     visible:false
                     onClicked: {
-                        var text="Please select a channel / frequency free of noise and interference. The current loss / pollution / throttle stats below can help,"+
+                        var text="Please select a channel / frequency free of noise and interference. The current loss / pollution stats below can help,"+
                                 "as well as the analyze channels feature or a frequency analyzer on your phone. DEF: Show OpenHD standard channels [1-5] only - they "+
                                 " often are free of wifi pollution and should be used."
                         _messageBoxInstance.set_text_and_show(text)
@@ -317,6 +326,18 @@ Rectangle{
                             width:  m_small_width
                             height: m_small_height
                             text: {
+                                return "TX ERRORS:\n"+_cameraStreamModelPrimary.total_n_tx_dropped_frames
+                            }
+                            color: _ohdSystemGround.wb_link_curr_foreign_pps > 20 ? "red" : "black"
+                            verticalAlignment: Qt.AlignVCenter
+                            horizontalAlignment: Qt.AlignHCenter
+                            font.bold: false
+                            font.pixelSize: settings.qopenhd_general_font_pixel_size
+                        }
+                        /*Text{
+                            width:  m_small_width
+                            height: m_small_height
+                            text: {
                                 var ret="THROTTLE:\n";
                                 if(_ohdSystemAir.curr_n_rate_adjustments<=-1){
                                     ret+="N/A";
@@ -332,30 +353,13 @@ Rectangle{
                             horizontalAlignment: Qt.AlignHCenter
                             font.bold: false
                             font.pixelSize: settings.qopenhd_general_font_pixel_size
-                        }
-                        /*Item{ // FILLER
-                    Layout.fillWidth: true
-                }*/
-                        /*ButtonIconInfo{
-                            onClicked: {
-                                var text="High Loss / Pollution / active throttle hint at a polluted channel."
-                                _messageBoxInstance.set_text_and_show(text)
-                            }
-                        }
-                        ButtonIconWarning{
-                            visible: (_ohdSystemGround.curr_rx_packet_loss_perc > 5 || _ohdSystemGround.wb_link_curr_foreign_pps > 20 || _ohdSystemAir.curr_n_rate_adjustments > 0)
-                            onClicked: {
-                                var text="On the bench, if you encounter issues like a high loss , high pollution or throttling, make sure:\n"+
-                                        "1) You are using a channel free of noise and interference (OHD channel 1-5 are a good bet)\n"+
-                                        "2) (RARELY,RTL8812AU only): Your TX card(s) aren't overamplifying the signal and have adequate cooling.";
-                                _messageBoxInstance.set_text_and_show(text)
-                            }
                         }*/
                     }
                 }
 
                 SettingsCategory{
-                    m_description: "TX POWER"
+                    m_description: "TX POWER";
+                    m_hide_elements: false;
                     Row{
                         anchors.horizontalCenter: parent.horizontalCenter
                         Text{
@@ -370,6 +374,7 @@ Rectangle{
                         Button{
                             text: "EDIT"
                             enabled: _ohdSystemAir.is_alive
+                            //enabled: true
                             onClicked: {
                                 close_all_dialoques();
                                 popup_change_tx_power.m_is_air=true;
@@ -388,6 +393,7 @@ Rectangle{
                         Button{
                             text: "EDIT"
                             enabled: _ohdSystemGround.is_alive
+                            //enabled: true
                             onClicked: {
                                 close_all_dialoques();
                                 popup_change_tx_power.m_is_air=false;
@@ -400,7 +406,7 @@ Rectangle{
 
                 SettingsCategory{
                     m_description: "ADVANCED (STBC,LDPC)"
-
+                    m_hide_elements: false;
                     Row{
                         anchors.horizontalCenter: parent.horizontalCenter
                         Text{
@@ -457,6 +463,5 @@ Rectangle{
     DialoqueFreqChangeAirGnd{
         id: dialoqueFreqChangeAirGnd
     }
-
 }
 

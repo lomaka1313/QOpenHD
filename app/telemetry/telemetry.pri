@@ -1,21 +1,22 @@
 INCLUDEPATH += $$PWD
 
-#INCLUDEPATH += $$PWD/../../lib/mavlink-headers
-
 SOURCES += \
     $$PWD/action/impl/cmdsender.cpp \
     $$PWD/action/fcaction.cpp \
     $$PWD/action/fcmissionhandler.cpp \
     $$PWD/action/fcmsgintervalhandler.cpp \
     $$PWD/action/ohdaction.cpp \
+    $$PWD/connection/mavlinkchannel.cpp \
     $$PWD/connection/tcp_connection.cpp \
     $$PWD/connection/udp_connection.cpp \
     $$PWD/models/fcmapmodel.cpp \
+    $$PWD/models/markermodel.cpp \
     $$PWD/settings/documentedparam.cpp \
     $$PWD/settings/frequencyhelper.cpp \
     $$PWD/settings/pollutionhelper.cpp \
     $$PWD/settings/wblinksettingshelper.cpp \
     $$PWD/action/impl/xparam.cpp \
+    $$PWD/tutil/geodesi_helper.cpp \
     app/telemetry/models/aohdsystem.cpp \
     app/telemetry/models/camerastreammodel.cpp \
     app/telemetry/models/rcchannelsmodel.cpp \
@@ -27,6 +28,7 @@ SOURCES += \
     app/telemetry/models/fcmavlinksystem.cpp \
     app/telemetry/models/fcmavlinkmissionitemsmodel.cpp \
 
+
 HEADERS += \
     $$PWD/action/impl/cmdsender.h \
     $$PWD/action/create_cmd_helper.hpp \
@@ -34,18 +36,21 @@ HEADERS += \
     $$PWD/action/fcmissionhandler.h \
     $$PWD/action/fcmsgintervalhandler.h \
     $$PWD/action/ohdaction.h \
+    $$PWD/connection/mavlinkchannel.h \
     $$PWD/connection/tcp_connection.h \
+    $$PWD/models/markermodel.h \
+    $$PWD/models/openhd_core/platform.hpp \
     $$PWD/settings/documentedparam.h \
     $$PWD/action/impl/xparam.h \
     $$PWD/settings/frequencyhelper.h \
     $$PWD/settings/pollutionhelper.h \
     $$PWD/settings/wifi_channel.h \
-    $$PWD/util/geodesi_helper.h \
-    $$PWD/util/mavlink_enum_to_string.h \
-    $$PWD//util/openhd_defines.hpp \
-    $$PWD//util/qopenhdmavlinkhelper.hpp \
-    $$PWD//util/telemetryutil.hpp \
-    $$PWD/util/mavlink_include.h \
+    $$PWD/tutil/geodesi_helper.h \
+    $$PWD/tutil/mavlink_enum_to_string.h \
+    $$PWD//tutil/openhd_defines.hpp \
+    $$PWD//tutil/qopenhdmavlinkhelper.hpp \
+    $$PWD//tutil/telemetryutil.hpp \
+    $$PWD/tutil/mavlink_include.h \
     $$PWD/models/fcmapmodel.h \
     $$PWD/settings/wblinksettingshelper.h \
     app/telemetry/models/aohdsystem.h \
@@ -58,6 +63,7 @@ HEADERS += \
     app/telemetry/settings/mavlinksettingsmodel.h \
     app/telemetry/models/fcmavlinksystem.h \
     app/telemetry/models/fcmavlinkmissionitemsmodel.h \
+    app/telemetry/models/openhd_core/camera.hpp \
 
 WindowsBuild{
     LIBS += -lws2_32

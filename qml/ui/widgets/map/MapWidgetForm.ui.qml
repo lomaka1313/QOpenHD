@@ -1,7 +1,7 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
-import QtGraphicalEffects 1.12
+
 import QtQuick.Shapes 1.0
 
 import Qt.labs.settings 1.0
@@ -10,6 +10,7 @@ import QtQuick.Window 2.12
 //import QtLocation 5.15
 
 import "../";
+import "../../elements";
 
 import OpenHD 1.0
 
@@ -228,6 +229,100 @@ BaseWidget {
                     anchors.right: parent.right
                     checked: settings.map_show_mission_waypoints
                     onCheckedChanged: settings.map_show_mission_waypoints = checked
+                }
+            }
+            Item {
+                width: 230
+                height: 32
+                Text {
+                    text: qsTr("Enable ADSB")
+                    color: "white"
+                    height: parent.height
+                    font.bold: true
+                    font.pixelSize: detailPanelFontPixels
+                    anchors.left: parent.left
+                    verticalAlignment: Text.AlignVCenter
+                }
+                Switch {
+                    width: 32
+                    height: parent.height
+                    anchors.rightMargin: 6
+                    anchors.right: parent.right
+                    checked: settings.adsb_enable
+                    onCheckedChanged: settings.adsb_enable = checked
+                }
+            }
+            Item {
+                width: 230
+                height: 32
+                visible: settings.adsb_enable
+                Text {
+                    text: qsTr("ADSB Internet Source")
+                    color: "white"
+                    height: parent.height
+                    font.bold: true
+                    font.pixelSize: detailPanelFontPixels
+                    anchors.left: parent.left
+                    verticalAlignment: Text.AlignVCenter
+                }
+                Switch {
+                    width: 32
+                    height: parent.height
+                    anchors.rightMargin: 6
+                    anchors.right: parent.right
+                    checked: settings.adsb_show_internet_data
+                    onCheckedChanged: settings.adsb_show_internet_data = checked
+                }
+            }
+            Item {
+                width: 230
+                height: 32
+                //TODO turn on once sdr is fixed
+                visible: false
+                Text {
+                    text: qsTr("ADSB SDR Source")
+                    color: "white"
+                    height: parent.height
+                    font.bold: true
+                    font.pixelSize: detailPanelFontPixels
+                    anchors.left: parent.left
+                    verticalAlignment: Text.AlignVCenter
+                }
+                Switch {
+                    width: 32
+                    height: parent.height
+                    anchors.rightMargin: 6
+                    anchors.right: parent.right
+                    checked: settings.adsb_show_sdr_data
+                    onCheckedChanged: settings.adsb_show_sdr_data = checked
+                }
+            }
+            Item {
+                width: 230
+                height: 32
+                visible: settings.adsb_enable
+                Text {
+                    id: adsb_radiusTitle
+                    text: qsTr("ADSB Radius")
+                    color: "white"
+                    height: parent.height
+                    font.bold: true
+                    font.pixelSize: detailPanelFontPixels
+                    anchors.left: parent.left
+                    verticalAlignment: Text.AlignVCenter
+                }
+                // Consti10: I think this is in metres
+                NewSlider {
+                    orientation: Qt.Horizontal
+                    from: (5*1000)
+                    value: settings.adsb_radius
+                    to: (100*1000)
+                    stepSize: 1000
+                    height: parent.height
+                    anchors.rightMargin: 0
+                    anchors.right: parent.right
+                    width: parent.width - 96
+                    onValueChanged: settings.adsb_radius = value
                 }
             }
         }

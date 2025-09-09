@@ -8,10 +8,10 @@
 #include <QQmlContext>
 #include <atomic>
 
-#include "../util/mavlink_include.h"
+#include "../tutil/mavlink_include.h"
 
-#include "../../../lib/lqtutils_master/lqtutils_prop.h"
-#include "util/openhd_defines.hpp"
+#include "util/lqutils_include.h"
+#include "tutil/openhd_defines.hpp"
 
 /**
  * Abstract OHD (Mavlink) system.
@@ -63,7 +63,8 @@ public: // public for QT
     L_RO_PROP(int,curr_space_left_mb,set_curr_space_left_mb,0)
     L_RO_PROP(int,ram_usage_perc,set_ram_usage_perc,0)
     L_RO_PROP(int,ram_total,set_ram_total,0)
-    L_RO_PROP(int,ohd_platform_type,set_ohd_platform,0)
+    L_RO_PROP(int,ohd_platform_type,set_ohd_platform,-1)
+    L_RO_PROP(QString,ohd_platform_type_as_string,set_ohd_platform_type_as_string,"N/A");
     L_RO_PROP(int,ohd_wifi_type,set_ohd_wifi,0)
     L_RO_PROP(int,ohd_cam_type,set_ohd_cam,0)
     L_RO_PROP(int,ohd_sys_type,set_ohd_sys_ident,0)
@@ -118,12 +119,17 @@ public: // public for QT
     // ---------- WIFI HOTSPOT ----------------------
     L_RO_PROP(int,wifi_hotspot_state,set_wifi_hotspot_state,-1) // 0 - not available, 1 - off, 2 - on
     L_RO_PROP(int,wifi_hotspot_frequency,set_wifi_hotspot_frequency,-1)
+    L_RO_PROP(int,external_devices_count,set_external_devices_count,-1)
     //
     L_RO_PROP(int,wb_gnd_operating_mode,set_wb_gnd_operating_mode,-1)
     //
     L_RO_PROP(int,air_reported_fc_sys_id,set_air_reported_fc_sys_id,-1)
     //
-     L_RO_PROP(bool,dirty_air_has_secondary_cam,set_dirty_air_has_secondary_cam,false)
+    L_RO_PROP(bool,dirty_air_has_secondary_cam,set_dirty_air_has_secondary_cam,false)
+    // x20 only right now
+    L_RO_PROP(int,thermal_protection_level,set_thermal_protection_level,-1)
+public:
+    Q_INVOKABLE QString get_rate_for_mcs_bw(int mcs,int bw);
 private:
     const bool m_is_air; // either true (for air) or false (for ground)
      uint8_t get_own_sys_id()const{
@@ -142,9 +148,11 @@ private:
      void process_x4b(const mavlink_openhd_stats_wb_video_ground_fec_performance_t& msg);
      void process_sys_status1(const mavlink_openhd_sys_status1_t& msg);
      void process_op_mode(const mavlink_openhd_wifbroadcast_gnd_operating_mode_t& msg);
+     // When apropriate, auto-fecth params until success
+     void autofech_params_if_apropriate();
 private:
-     std::atomic<int32_t> m_last_heartbeat_ms = -1;
-     std::atomic<int32_t> m_last_message_ms= -1;
+     std::atomic<int64_t> m_last_heartbeat_ms = -1;
+     std::atomic<int64_t> m_last_message_ms= -1;
      //
      QString m_curr_incoming_bitrate="Bitrate NA";
      QString m_curr_incoming_tele_bitrate="Bitrate NA";
@@ -162,6 +170,8 @@ private:
     std::chrono::steady_clock::time_point m_last_tx_error_hud_message=std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point m_last_n_cameras_message=std::chrono::steady_clock::now();
     void update_alive_status_with_hud_message(bool alive);
+private:
+    bool m_x20_rpi_upgrade_warning_logged=false;
 };
 
 

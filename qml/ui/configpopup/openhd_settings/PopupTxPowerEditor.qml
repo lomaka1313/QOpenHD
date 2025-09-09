@@ -3,9 +3,9 @@ import QtQuick 2.0
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
-import QtQuick.Dialogs 1.0
+
 import QtQuick.Controls.Material 2.12
-import QtQuick.Controls.Styles 1.4
+ 
 
 import Qt.labs.settings 1.0
 
@@ -14,13 +14,14 @@ import OpenHD 1.0
 import "../../../ui" as Ui
 import "../../elements"
 
-Rectangle{
-    //width: parent.width-12
-    //height: parent.height*2/3;
-    width: parent.width - 20
-    height: parent.height -20
-    anchors.centerIn: parent
-    color: "#333c4c"
+PopupBigGeneric{
+    // Overwritten from parent
+    m_title: "Transmit Power"+" " + (m_is_air ? "Air" : "Ground")
+    onCloseButtonClicked: {
+        close()
+    }
+
+    // Impl.
 
     property int m_margin: 10
 
@@ -31,6 +32,8 @@ Rectangle{
     property int left_text_preferred_width: 100
     property bool isSynced:false
 
+    property bool m_card_type_provided_by_openhd: false
+
     function open(){
         if(_fcMavlinkSystem.is_alive && _fcMavlinkSystem.armed){
             _qopenhd.show_toast("WARNING: Changing TX power while armed is not recommended !");
@@ -40,11 +43,30 @@ Rectangle{
             _messageBoxInstance.set_text_and_show("Changing tx power is only possible on openhd supported cards.");
             return;
         }
+        comboBoxCardSelectManufacturer.model= get_model_manufacturer_for_chip_type()
+
+        const card_sub_type=m_is_air ? _wifi_card_air.card_sub_type : _wifi_card_gnd0.card_sub_type
+        if(card_sub_type==_wifi_card_air.mWIFI_CARD_SUB_TYPE_RTL8812AU_ASUS){
+            // rtl8812 ASUS
+            m_user_selected_card_manufacturer=1;
+            m_card_type_provided_by_openhd=true;
+        }else if(card_sub_type==_wifi_card_air.mWIFI_CARD_SUB_TYPE_RTL8812AU_X20){
+            console.log("rtl8812au x20");
+            // rtl8812 x20
+            m_user_selected_card_manufacturer=2;
+            m_card_type_provided_by_openhd=true;
+        }else{
+            // we don't know the card type .. user has to set it
+            m_user_selected_card_manufacturer=-1;
+            m_card_type_provided_by_openhd=false;
+        }
         // The user has to enter the card type every time - otherwise, we have issues with air and ground
-        comboBoxCardSelectManufacturer.currentIndex=0;
-        combo_box_txpower_disarmed.currentIndex=0;
-        combo_box_txpower_armed.currentIndex=0;
-        m_user_selected_card_manufacturer=-1;
+        if(m_user_selected_card_manufacturer>=1){
+            comboBoxCardSelectManufacturer.currentIndex=m_user_selected_card_manufacturer+1;
+        }else{
+            comboBoxCardSelectManufacturer.currentIndex=0;
+        }
+        update_ui_txpower_for_chip_type_manufacturer();
         visible=true;
         enabled=true;
     }
@@ -61,24 +83,19 @@ Rectangle{
         return _wifi_card_gnd0.card_type;
     }
 
-    function get_card_chipset_str(){
-        var chipset=get_chipset_type();
-        if(chipset==0){
-            return "RTL88XXAU";
-        }else if(chipset==1){
-            return "RTL88XXBU";
-        }
-        return "ERROR";
-    }
     // Should never show up !
     ListModel{
+        id: model_manufacturer_unknown_chipset
+        ListElement {title: "Unknown chipset"; value: -1}
+    }
+    ListModel{
         id: model_error
-        ListElement {title: "Not Enabled"; value: -1}
+        ListElement {title: "ERROR"; value: -1}
     }
 
     ListModel{
         id: model_rtl8812au_manufacturers
-        ListElement {title: "Wifi Card [RTL88XXAU]"; value: -1}
+        ListElement {title: "Please Select"; value: -1}
         ListElement {title: "AC56/AWUS036ACH [RTL88XXAU]"; value: 0}
         ListElement {title: "AC180 [RTL88XXAU]"; value: 1}
         ListElement {title: "OpenHD HW [RTL88XXAU]"; value: 2}
@@ -98,7 +115,7 @@ Rectangle{
         }else if(chip_type==1){
             return model_rtl8812bu_manufacturers;
         }
-        return model_error;
+        return model_manufacturer_unknown_chipset;
     }
 
     // TX power choices for each chipset / manufacturer
@@ -124,11 +141,11 @@ Rectangle{
     ListModel{
         id: model_rtl8812au_manufacturer_openhd
         ListElement {title: "Please select"; value: -1}
-        ListElement {title: "LOW    [3]   ~25mW"; value: 3}
-        ListElement {title: "MEDIUM [5]   ~200mW"; value: 5}
-        ListElement {title: "HIGH   [14]  ~800mW"; value: 14}
-        ListElement {title: "MAX1   [18]   >1W"; value: 18}
-        ListElement {title: "MAX2   [20]   >1W"; value: 20}
+        ListElement {title: "HIGH PWR  [1]"; value: 1}
+        ListElement {title: "HIGH PWR  [5]"; value: 5}
+        ListElement {title: "HIGH PWR  [10]"; value: 10}
+        ListElement {title: "HIGH PWR  [15]"; value: 15}
+        ListElement {title: "HIGH PWR  [20]"; value: 20}
     }
     ListModel{
         id: model_rtl8812au_manufacturer_generic
@@ -170,6 +187,7 @@ Rectangle{
         var chip_type=get_chipset_type();
         var manufacturer=m_user_selected_card_manufacturer;
         if(manufacturer<0){
+            console.log("Unknown manufacturer");
             return model_error;
         }
         var ret;
@@ -206,6 +224,13 @@ Rectangle{
         return ret;
     }
 
+    function update_ui_txpower_for_chip_type_manufacturer(){
+        combo_box_txpower_disarmed.model=get_model_txpower_for_chip_type_manufacturer(false)
+        combo_box_txpower_armed.model=get_model_txpower_for_chip_type_manufacturer(true)
+        combo_box_txpower_disarmed.currentIndex=0;
+        combo_box_txpower_armed.currentIndex=0;
+    }
+
     // state 0: current state 1: disarmed state 2: armed
     //
     function get_current_tx_power_int(state){
@@ -223,36 +248,15 @@ Rectangle{
     }
 
     ColumnLayout{
-        id: main_row_layout
-        anchors.fill: parent
+        id: main_layout
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
         anchors.leftMargin: 10
-        anchors.rightMargin: 5
+        anchors.rightMargin: 10
+        anchors.topMargin: dirty_top_margin_for_implementation
 
-        BaseHeaderItem{
-            m_text: "Transmit Power"+" " + (m_is_air ? "Air" : "Ground")
-        }
-
-        Item {
-            id:closeButtonWrapper
-            Layout.alignment: Qt.AlignTop | Qt.AlignRight
-            Layout.rightMargin: closeButton.width-main_row_layout.anchors.rightMargin
-            Layout.topMargin: (closeButtonWrapper.height-closeButton.height)-1
-
-            Button {
-                id:closeButton
-                text: "X"
-                height:42
-                width:42
-                background: Rectangle {
-                    Layout.fillHeight: parent
-                    Layout.fillWidth: parent
-                    color: closeButton.hovered ? "darkgrey" : "lightgrey"
-                }
-                onClicked: {
-                    close()
-                }
-            }
-        }
 
         Rectangle {
             width: parent.width
@@ -270,16 +274,19 @@ Rectangle{
                         id: comboBoxCardSelectManufacturer
                         Layout.minimumWidth: 180
                         Layout.preferredWidth: 480
-                        model: get_model_manufacturer_for_chip_type()
+                        model: model_manufacturer_unknown_chipset
                         textRole: "title"
-                        onCurrentIndexChanged: {
+                        onActivated: {
                             var manufacturer = comboBoxCardSelectManufacturer.model.get(comboBoxCardSelectManufacturer.currentIndex).value;
+                            console.log("Set: "+manufacturer);
                             m_user_selected_card_manufacturer = manufacturer;
+                            update_ui_txpower_for_chip_type_manufacturer();
                         }
                         font.pixelSize: 14
+                        // If the card type is provided by openhd, no need to let the user select
+                        enabled: !m_card_type_provided_by_openhd
                     }
                 }
-
                 RowLayout {
                     Layout.fillWidth: true
                     Button {

@@ -86,6 +86,8 @@ Settings {
     property bool dev_show_whitelisted_params: false
     property bool dev_show_advanced_button: false
     property bool dev_allow_freq_change_when_armed: false
+    property bool dev_show_5180mhz_lowband: false
+    property bool dev_disable_autofetch: false
     // WARNING END
     //WARNING: THIS makes the RC panel visible
     property bool app_show_RC: false
@@ -293,6 +295,12 @@ Settings {
     property bool map_drone_track: true
     property bool map_show_mission_waypoints: true
 
+    property bool adsb_enable: false
+    property double adsb_radius: 50000 //using meters for now- api is in NM
+    property bool adsb_show_internet_data: true
+    property bool adsb_show_sdr_data: true
+    property bool adsb_show_unknown_or_zero_alt: false //alot of traffic has no alt and is not useful
+
     property int map_zoom: 18
     property double map_size: 1
     property bool show_throttle: true
@@ -373,7 +381,7 @@ Settings {
     property bool dev_force_show_full_screen: false
 
     // experimental
-    property bool dev_enable_live_audio_playback: false
+    property bool dev_enable_live_audio_playback: true
     // might / might not work
     property bool dev_set_swap_interval_zero: false
 
@@ -391,16 +399,10 @@ Settings {
 
     // really really dirty, i want to get rid of it as soon as possible
     property bool dirty_enable_inav_hacks: false
-    // FC discovery - can be annoying / tricky
-    property bool dirty_enable_mavlink_fc_sys_id_check: false
 
     property int custom_cursor_type: 0
     property int custom_cursor_scale: 1 // arbitrary scale values - higher == bigger,
     property bool enable_cursor_auto_hide: false
-
-    // experimental - mavlink via TCP
-    property bool dev_mavlink_via_tcp: false
-    property string dev_mavlink_tcp_ip: "0.0.0.0"
 
     // message can be removed if needed.
     property bool dev_wb_show_no_stbc_enabled_warning: false
@@ -417,4 +419,6 @@ Settings {
     property string qopenhd_mavlink_connection_manual_tcp_ip: "192.168.178.36"
 
     property int qopenhd_frequency_filter_selection: 0;
+
+    property bool show_dev_stats_overlay: false
 }

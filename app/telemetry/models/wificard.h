@@ -4,9 +4,8 @@
 #include <memory>
 #include <qobject.h>
 #include <qtimer.h>
-#include "../../../lib/lqtutils_master/lqtutils_prop.h"
-
-#include "../util/mavlink_include.h"
+#include "util/lqutils_include.h"
+#include "../tutil/mavlink_include.h"
 
 // Stats unique per each connected (wifibroadcast) wfi card
 // Air has only one card, ground can have one or more card(s)
@@ -33,6 +32,11 @@ class WiFiCard : public QObject
     L_RO_PROP(int,card_type,set_card_type,-1) // -1 = no info available yet, otherwise, openhd card type (0..?)
     L_RO_PROP(QString,card_type_as_string,set_card_type_as_string,"N/A")
     L_RO_PROP(int,card_type_supported,set_card_type_supported,false)
+    // exta
+    L_RO_PROP(int,card_sub_type,set_card_sub_type,-1)
+public:
+    L_RO_PROP(int,mWIFI_CARD_SUB_TYPE_RTL8812AU_ASUS,unused_WIFI_CARD_SUB_TYPE_RTL8812AU_ASUS,1)
+    L_RO_PROP(int,mWIFI_CARD_SUB_TYPE_RTL8812AU_X20,unused_WIFI_CARD_SUB_TYPE_RTL8812AU_X20,2)
 public:
     explicit WiFiCard(bool is_air,int card_idx,QObject *parent = nullptr);
     static constexpr int N_CARDS=4;
@@ -54,7 +58,7 @@ private:
     int64_t m_last_packets_in_X_second_value=-1;
     // Card alive - ONLY USED FOR GROUND CARD(s)
     std::unique_ptr<QTimer> m_alive_timer = nullptr;
-    std::atomic<int> m_last_mavlink_message=0;
+    std::atomic<int64_t> m_last_mavlink_message=0;
     void update_alive();
 };
 

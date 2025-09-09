@@ -1,7 +1,7 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
-import QtGraphicalEffects 1.12
+
 import Qt.labs.settings 1.0
 import QtQuick.Shapes 1.0
 
@@ -434,6 +434,29 @@ BaseWidget {
             font.pixelSize: 12
             font.family: settings.font_text
             verticalAlignment: Text.AlignTop
+            wrapMode: Text.NoWrap
+            elide: Text.ElideNone
+            clip: false
+            style: Text.Outline
+            styleColor: settings.color_glow
+        }
+
+        // TX errors
+        Text{
+            id: txerrors_icon
+            visible: _ohdSystemAir.is_alive && _ohdSystemAir.tx_is_currently_dropping_packets
+            width: 32
+            height: 32
+            color: "yellow"
+            text: qsTr("\uf7ba")
+            anchors.left: downlink_dbm.right
+            anchors.leftMargin: 2
+            anchors.top: parent.top
+            anchors.topMargin: 2
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            font.pixelSize: 30
+            font.family: settings.font_text
             wrapMode: Text.NoWrap
             elide: Text.ElideNone
             clip: false

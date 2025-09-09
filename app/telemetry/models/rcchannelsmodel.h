@@ -9,7 +9,7 @@
 #include <memory>
 #include <mutex>
 
-#include "../../../lib/lqtutils_master/lqtutils_prop.h"
+#include "util/lqutils_include.h"
 
 // Don't get confused - we have 2 instances of this model:
 // instanceGround()-> The OpenHD ground instance for now broadcasts the rc channel value(s) to QOpenHD for display / debugging.
@@ -50,7 +50,7 @@ public slots:
    QList<int> m_data{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 private:
    // We need thread saftey on the alive
-   std::atomic<int32_t> m_last_update_ms = -1;
+   std::atomic<int64_t> m_last_update_ms = -1;
    std::unique_ptr<QTimer> m_alive_timer;
    void update_alive();
 };

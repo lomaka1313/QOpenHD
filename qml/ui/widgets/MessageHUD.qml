@@ -1,7 +1,7 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
-import QtGraphicalEffects 1.12
+
 
 import Qt.labs.settings 1.0
 
@@ -31,6 +31,7 @@ BaseWidget {
     // We do not want this widget to be dragable / touchable, it needs to be "hidden" otherwise
     // clicking the secondary video becomes impossible
     disable_dragging : true
+    z: 20
 
     Item {
         id: widgetInner

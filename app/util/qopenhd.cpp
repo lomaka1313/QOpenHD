@@ -5,13 +5,14 @@
 #include <QDebug>
 #include <qapplication.h>
 #include <QTimer>
+#include <QHostAddress>
 
 #include<iostream>
 #include <sys/stat.h>
 #include<fstream>
 #include<string>
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__macos__)
 #include "common/openhd-util.hpp"
 #endif
 
@@ -79,7 +80,7 @@ void QOpenHD::switchToLanguage(const QString &language) {
         qDebug()<<"Error switch language- engine not set";
         return;
     }
-    QLocale::setDefault(language);
+    QLocale::setDefault(QLocale(language));
 
     if (!m_translator.isEmpty()) {
         QCoreApplication::removeTranslator(&m_translator);
@@ -227,6 +228,9 @@ QString QOpenHD::show_local_ip()
 #ifdef __linux__
     auto res=OHDUtil::run_command_out("hostname -I");
     return QString(res->c_str());
+#elif defined(__macos__)
+    auto res=OHDUtil::run_command_out("ifconfig -l | xargs -n1 ipconfig getifaddr");
+    return QString(res->c_str());
 #else
     return QString("Only works on linux");
 #endif
@@ -246,6 +250,15 @@ bool QOpenHD::is_linux()
     return false;
 }
 
+bool QOpenHD::is_mac()
+{
+#if defined(__macos__)
+    return true;
+#else
+    return false;
+#endif
+}
+
 bool QOpenHD::is_android()
 {
 #if defined(__android__)
@@ -253,6 +266,15 @@ bool QOpenHD::is_android()
 #else
     return false;
     //return true;
+#endif
+}
+
+bool QOpenHD::is_windows()
+{
+#ifdef __windows__
+    return true;
+#else
+    return false;
 #endif
 }
 
@@ -287,12 +309,9 @@ void QOpenHD::sysctl_openhd(int task)
 
 bool QOpenHD::is_valid_ip(QString ip)
 {
-#ifdef __windows__
-    //TODO fix windows
-    return true;
-#else
-    return OHDUtil::is_valid_ip(ip.toStdString());
-#endif
+    QHostAddress addr;
+    bool valid=addr.setAddress(ip);
+    return valid;
 }
 
 bool QOpenHD::is_platform_rpi()
@@ -344,6 +363,19 @@ void QOpenHD::show_toast(QString message,bool long_toast)
     emit signal_toast_add(message,long_toast);
 }
 
+void QOpenHD::show_error_message(QString message)
+{
+
+}
+
+void QOpenHD::set_busy_for_milliseconds(int milliseconds,QString reason)
+{
+    set_is_busy(true);
+    set_busy_reason(reason);
+    const int timeout_ms = milliseconds;
+    QTimer::singleShot(timeout_ms, this, &QOpenHD::handle_busy_timeout);
+}
+
 
 void QOpenHD::handle_toast_timeout()
 {
@@ -355,6 +387,12 @@ void QOpenHD::handle_toast_timeout()
        m_toast_message_queue.pop_front();
        show_toast_and_add_remove_timer(front.text,front.long_toast);
     }
+}
+
+void QOpenHD::handle_busy_timeout()
+{
+    set_is_busy(false);
+    set_busy_reason("");
 }
 
 void QOpenHD::do_not_call_toast_add(QString text,bool long_toast)

@@ -1,8 +1,6 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
-import QtQuick.Controls.Styles 1.4
 import QtQuick.Layouts 1.12
-import QtGraphicalEffects 1.12
 
 import OpenHD 1.0
 
@@ -12,8 +10,11 @@ import "./widgets"
 import "./widgets/map"
 import "../resources" as Resources
 import "./elements"
+import "./sidebar"
 
 import "../video"
+
+import "sidebar"
 
 Item {
     id: hudOverlayGrid
@@ -44,6 +45,7 @@ Item {
         hudOverlayGrid.focus = true;
         // Receive key events
         hudOverlayGrid.enabled =true;
+        hudOverlayGrid.visible =true;
         // argh
         actual_hud_elements.visible=true;
     }
@@ -201,7 +203,14 @@ Item {
 
     Keys.onPressed: (event)=> {
                         console.log("HUDOverlayGrid::Key was pressed:"+event);
-                        if (event.key == Qt.Key_Return) {
+                        if(event.key==Qt.Key_Left || event.key == Qt.Key_Right || event.key == Qt.Key_Up || event.key == Qt.Key_Down){
+                            // If the user presses any navigation key, we open up the sidebar and hand over the inputs to it
+                            if(!sidebar.m_extra_is_visible){
+                                sidebar.open_and_take_control(true);
+                                event.accepted=true;
+                            }
+                        }
+                        /*if (event.key == Qt.Key_Return) {
                             //console.log("enter was pressed");
                             event.accepted = true;
                             dummy_joystick_enter()
@@ -221,7 +230,7 @@ Item {
                             //console.log("down was pressed")
                             event.accepted=true;
                             dummy_joystick_down()
-                        }
+                        }*/
                     }
 
     Image {
@@ -236,6 +245,10 @@ Item {
         anchors.leftMargin: 8
         anchors.top: parent.top
         anchors.topMargin: 0
+        // If the sidebar is activated, do not show the (button/image) that opens the advanced menu
+        // since on devices with a funky ratio (e.g. extra wide, like most modern android phones)
+        // the back button of the sidebar and this button conflict
+        visible: !sidebar.m_extra_is_visible
 
         MouseArea {
             id: settingsButtonMouseArea
@@ -264,6 +277,14 @@ Item {
         id: actual_hud_elements
         width: parent.width
         height: parent.height
+        visible: !quickPanel.visible
+        MouseArea{
+            anchors.fill: parent
+            onClicked: {
+                sidebar.notify_sidebar_user_clicked_outside();
+            }
+            enabled: sidebar.visible
+        }
 
         // By default on top row
         // --------------------------------------------------------------------------
@@ -296,10 +317,6 @@ Item {
         // TODO SORT ME
 
         // + 0% cpu
-        MessageHUD {
-            id: messageHUD
-        }
-
         GroundPowerWidget {
             id: groundPowerWidget
         }
@@ -472,12 +489,21 @@ Item {
             id: uavtimewidget
         }
 
-        Sidebar{
+        SideBarMain{
             id: sidebar
+        }
+
+        MessageHUD {
+            id: messageHUD
+        }
+
+        X20OverheatWidget{
+
         }
     }
 
     // Extra element - allows customizing the OSD color(s) and more
+    // TODO QT 6
     OSDCustomizer {
         id: osdCustomizer
         anchors.centerIn: parent
@@ -496,7 +522,9 @@ Item {
 
     Label{
         text: "JOSTICK NAVIGATION ENABLED"
-        anchors.centerIn: parent
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 30
         visible: m_keyboard_navigation_active
         // style
         color: settings.color_text
@@ -506,6 +534,7 @@ Item {
         wrapMode: Text.NoWrap
         style: Text.Outline
         styleColor: settings.color_glow
+        height: 50
     }
     // Shows center while dragging widgets
     Rectangle{
@@ -523,6 +552,10 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         visible: m_show_vertical_center_indicator
+    }
+
+    DevStreamingInfo{
+
     }
 }
 

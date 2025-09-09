@@ -4,16 +4,15 @@
 #include <QDebug>
 #include "util/qopenhd.h"
 
-#include <geographiclib-c-2.0/src/geodesic.h>
-#include "../util/geodesi_helper.h"
+#include "../tutil/geodesi_helper.h"
 
 #include <QDateTime>
 
 #include <logging/logmessagesmodel.h>
 #include <logging/hudlogmessagesmodel.h>
 
-#include "util/qopenhdmavlinkhelper.hpp"
-#include "util/telemetryutil.hpp"
+#include "tutil/qopenhdmavlinkhelper.hpp"
+#include "tutil/telemetryutil.hpp"
 
 #include "../action/fcaction.h"
 
@@ -125,9 +124,8 @@ bool FCMavlinkSystem::process_message(const mavlink_message_t &msg)
         mavlink_msg_system_time_decode(&msg, &sys_time);
         set_sys_time_unix_usec(sys_time.time_unix_usec);
         QDateTime time;
-        time.setTime_t(sys_time.time_unix_usec/1000/1000);
+        time.setMSecsSinceEpoch(sys_time.time_unix_usec/1000);
         set_sys_time_unix_as_str(time.toString());
-
         uint32_t boot_time = sys_time.time_boot_ms;
         /*if (boot_time < m_last_boot || m_last_boot == 0) {
                 m_last_boot = boot_time;
@@ -211,7 +209,7 @@ bool FCMavlinkSystem::process_message(const mavlink_message_t &msg)
             else {
             added_distance_m=distance_between(m_last_lat,m_last_lon,lat,lon);
             }
-            qDebug() << "added_distance_m" << added_distance_m;
+            //qDebug() << "added_distance_m" << added_distance_m;
             if (added_distance_m > 2.0){
 
                 total_dist = total_dist + added_distance_m;

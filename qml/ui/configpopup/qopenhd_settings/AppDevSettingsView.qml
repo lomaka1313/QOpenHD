@@ -1,10 +1,9 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.12
-import QtQuick.Dialogs 1.0
+
 import QtQuick.Controls.Material 2.12
 import Qt.labs.settings 1.0
-import Qt.labs.folderlistmodel 2.0
 
 import OpenHD 1.0
 
@@ -69,6 +68,34 @@ ScrollView {
                     anchors.verticalCenter: parent.verticalCenter
                     checked: settings.dev_allow_freq_change_when_armed
                     onCheckedChanged: settings.dev_allow_freq_change_when_armed = checked
+                }
+            }
+            SettingBaseElement{
+                m_short_description:"dev_show_5180mhz_lowband"
+                m_long_description: "Shows the 5180Mhz, 5200Mhz and 5220Mhz channels by default (NOTE: These channels are rarely free)"
+                Switch {
+                    width: 32
+                    height: elementHeight
+                    anchors.rightMargin: Qt.inputMethod.visible ? 96 : 36
+
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: settings.dev_show_5180mhz_lowband
+                    onCheckedChanged: settings.dev_show_5180mhz_lowband = checked
+                }
+            }
+            SettingBaseElement{
+                m_short_description:"dev_disable_autofetch_params"
+                m_long_description: "Disables automatic fetching of the air / ground openhd param set(s)"
+                Switch {
+                    width: 32
+                    height: elementHeight
+                    anchors.rightMargin: Qt.inputMethod.visible ? 96 : 36
+
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    checked: settings.dev_disable_autofetch
+                    onCheckedChanged: settings.dev_disable_autofetch = checked
                 }
             }
             SettingBaseElement{
@@ -166,51 +193,6 @@ ScrollView {
                     anchors.verticalCenter: parent.verticalCenter
                     checked: settings.dirty_enable_inav_hacks
                     onCheckedChanged: settings.dirty_enable_inav_hacks = checked
-                }
-            }
-            SettingBaseElement{
-                m_short_description: "dirty_enable_mavlink_fc_sys_id_check"
-                 m_long_description: "Only accept FCs that explicitly expose themselves as autopilot - can fix issues with FC discovery in QOpenHD."
-
-                Switch {
-                    width: 32
-                    height: elementHeight
-                    anchors.rightMargin: Qt.inputMethod.visible ? 96 : 36
-
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    checked: settings.dirty_enable_mavlink_fc_sys_id_check
-                    onCheckedChanged: settings.dirty_enable_mavlink_fc_sys_id_check = checked
-                }
-            }
-
-            SettingBaseElement{
-                m_short_description: "dev_mavlink_via_tcp"
-                m_long_description: "Requires full restart. Connect via TCP instead of UDP. Requires matching server IP."
-                Switch {
-                    width: 32
-                    height: elementHeight
-                    anchors.rightMargin: Qt.inputMethod.visible ? 96 : 36
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    checked: settings.dev_mavlink_via_tcp
-                    onCheckedChanged: settings.dev_mavlink_via_tcp = checked
-                }
-            }
-            SettingBaseElement{
-                m_short_description: "dev_mavlink_tcp_ip"
-                m_long_description: "Requires full restart. IP of mavlink tcp server"
-                TextInput{
-                    id: ti_ip
-                    height: elementHeight
-                    anchors.rightMargin: Qt.inputMethod.visible ? 96 : 36
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-
-                    text: settings.dev_mavlink_tcp_ip
-                    cursorVisible: true
-                    inputMask: "999.999.999.999"
-                    onTextEdited: settings.dev_mavlink_tcp_ip = ti_ip.text
                 }
             }
             SettingBaseElement{

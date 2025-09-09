@@ -1,7 +1,7 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
-import QtQuick.Dialogs 1.1
+
 import QtQuick.Controls.Material 2.12
 
 import Qt.labs.settings 1.0
@@ -66,7 +66,13 @@ Column {
     }
 
     StatusCardRow{
-        m_left_text: qsTr("Version:")
+        m_left_text: qsTr("Platform:")
+        m_right_text: m_is_ground ? _ohdSystemGround.ohd_platform_type_as_string : _ohdSystemAir.ohd_platform_type_as_string
+        m_has_error: false
+    }
+
+    StatusCardRow{
+        m_left_text: qsTr("OHD Version:")
         m_right_text: m_version
         m_has_error: {
             if(m_is_ground){
@@ -212,6 +218,19 @@ Column {
         }
         m_has_error: {
             return m_right_text=="UNAVAILABLE";
+        }
+    }
+    StatusCardRow{
+        visible: m_is_ground;
+        m_left_text: "EXTERNAL DEVICES:"
+        m_right_text: {
+            if(_ohdSystemGround.external_devices_count<0){
+                return "N/A";
+            }
+            if(_ohdSystemGround.external_devices_count==0){
+                return "NONE";
+            }
+            return _ohdSystemGround.external_devices_count+"x";
         }
     }
 

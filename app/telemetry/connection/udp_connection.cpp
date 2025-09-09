@@ -1,5 +1,5 @@
 #include "udp_connection.h"
-#include "util/qopenhdmavlinkhelper.hpp"
+#include "tutil/qopenhdmavlinkhelper.hpp"
 
 #ifdef __windows__
 #define _WIN32_WINNT 0x0600 //TODO dirty
@@ -13,6 +13,7 @@
 #endif
 
 #include <qdebug.h>
+#include "mavlinkchannel.h"
 
 #ifdef WINDOWS
 #define GET_ERROR(_x) WSAGetLastError()
@@ -32,18 +33,20 @@ UDPConnection::UDPConnection(const std::string local_ip,const int local_port,MAV
 
 UDPConnection::~UDPConnection()
 {
-    stop();
+    stop_looping_if();
 }
 
 
-void UDPConnection::start()
+void UDPConnection::start_looping()
 {
+    assert(m_receive_thread==nullptr);
     m_keep_receiving=true;
     m_receive_thread=std::make_unique<std::thread>(&UDPConnection::loop_receive,this);
 }
 
-void UDPConnection::stop()
+void UDPConnection::stop_looping()
 {
+    assert(m_receive_thread!=nullptr);
     qDebug()<<"UDP stop - begin";
     m_keep_receiving=false;
 #ifdef __windows__
@@ -99,11 +102,21 @@ bool UDPConnection::threadsafe_is_alive(){
     return elapsed <= 3*1000;
 }
 
+bool UDPConnection::is_looping()
+{
+    return m_receive_thread!=nullptr;
+}
+
+void UDPConnection::stop_looping_if()
+{
+    if(is_looping())stop_looping();
+}
+
 void UDPConnection::process_data(const uint8_t *data, int data_len)
 {
+    mavlink_message_t msg;
     for (int i = 0; i < data_len; i++) {
-        mavlink_message_t msg;
-        uint8_t res = mavlink_parse_char(0, (uint8_t)data[i], &msg, &m_recv_status);
+        uint8_t res = mavlink_parse_char(m_mav_channel, (uint8_t)data[i], &msg, &m_recv_status);
         if (res) {
             process_mavlink_message(msg);
         }
@@ -153,6 +166,16 @@ bool UDPConnection::setup_socket()
     }*/
     if (bind(m_socket_fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0) {
         qDebug()<<"Cannot bind port "<<strerror(errno);
+        // TODO finalize merge
+/*if (errno==98){ //port already bound error code
+if(_local_port==14550){
+    _local_port=14551;
+} else if (_local_port == 14551){
+    _local_port= 14550;
+} else {
+    _local_port= m_local_port; //finally back to whatever is set if its not 14550 or 14551.. unlikely
+}
+}*/
         close(m_socket_fd);
         return false;
     }
@@ -165,15 +188,16 @@ void UDPConnection::connect_once()
     const bool success=setup_socket();
     if(success){
         // Enough for MTU 1500 bytes.
-        uint8_t buffer[2048];
+        auto buffer=std::make_unique<std::vector<uint8_t>>();
+        buffer->resize(1500);
 
         while (m_keep_receiving) {
             struct sockaddr_in src_addr = {};
             socklen_t src_addr_len = sizeof(src_addr);
             const auto recv_len = recvfrom(
                 m_socket_fd,
-                (char*)buffer,
-                sizeof(buffer),
+                (char*)buffer->data(),
+                buffer->size(),
                 0,
                 reinterpret_cast<struct sockaddr*>(&src_addr),
                 &src_addr_len);
@@ -195,7 +219,7 @@ void UDPConnection::connect_once()
             const int remote_port=ntohs(src_addr.sin_port);
             set_remote(remote_ip,remote_port);
             m_last_data_ms=QOpenHDMavlinkHelper::getTimeMilliseconds();
-            process_data(buffer,recv_len);
+            process_data(buffer->data(),recv_len);
         }
     }
     // TODO close socket
@@ -220,7 +244,7 @@ void UDPConnection::set_remote(const std::string ip, int port)
         auto& remote=m_curr_remote.value();
         if(remote.ip!=ip || remote.port != port){
             auto new_remote=Remote{ip,port};
-            qDebug()<<"Remote chnged from "<<remote.to_string().c_str()<<" to "<<new_remote.to_string().c_str();
+            qDebug()<<"Remote changed from "<<remote.to_string().c_str()<<" to "<<new_remote.to_string().c_str();
             m_curr_remote=remote;
         }
     }else{

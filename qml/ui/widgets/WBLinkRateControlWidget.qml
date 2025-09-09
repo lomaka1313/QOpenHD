@@ -1,7 +1,7 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
-import QtGraphicalEffects 1.12
+
 import QtQuick.Shapes 1.0
 import QtQuick.Controls.Material 2.12
 
@@ -23,7 +23,7 @@ BaseWidget {
     bw_verbose_name: "WB LIVE RATE CONTROL"
 
     defaultAlignment: 0
-    defaultXOffset: 320
+    defaultXOffset: 250
     defaultYOffset: 2
     defaultHCenter: false
     defaultVCenter: false
@@ -40,7 +40,7 @@ BaseWidget {
     property int m_curr_mcs_index: _ohdSystemAir.curr_mcs_index
     property int m_curr_bitrate_kbits: _ohdSystemAir.curr_bitrate_kbits
 
-    property int m_curr_fine_adjustments: _ohdSystemAir.curr_n_rate_adjustments
+    //property int m_curr_fine_adjustments: _ohdSystemAir.curr_n_rate_adjustments
 
     property int m_curr_fec_perc: _cameraStreamModelPrimary.curr_fec_percentage
     property int m_curr_keyframe_i: _cameraStreamModelPrimary.curr_keyframe_interval
@@ -111,8 +111,8 @@ BaseWidget {
         }
         var ret=bitrate_kbits_readable(m_curr_bitrate_kbits);
         //if(m_curr_fine_adjustments>0){
-            var fine_readable="-"+m_curr_fine_adjustments;
-            ret+=fine_readable;
+        //    var fine_readable="-"+m_curr_fine_adjustments;
+        //    ret+=fine_readable;
         //}
         ret += (" ["+m_curr_mcs_index+"]");
         return ret;
@@ -276,7 +276,7 @@ Make the video more stable (less microfreezes) on the cost of less image quality
                     onCheckedChanged: settings.wb_link_rate_control_widget_show_fec_and_keyframe = checked
                 }
             }
-            Item {
+            /*Item {
                 width: parent.width
                 height: 32
                 Text {
@@ -296,7 +296,7 @@ Make the video more stable (less microfreezes) on the cost of less image quality
                     checked: settings.wb_link_rate_control_widget_show_throttle_warning
                     onCheckedChanged: settings.wb_link_rate_control_widget_show_throttle_warning = checked
                 }
-            }
+            }*/
 
 
             Item {
@@ -331,28 +331,6 @@ Make the video more stable (less microfreezes) on the cost of less image quality
             m_text: "Range vs Bitrate"
             m_info_text: m_DESCRIPTION_CHANNEL_WIDTH
         }
-        /*TabBar{
-                width: parent.width
-                height: m_row_height
-                id: channel_width_tab_bar
-                currentIndex:  m_curr_channel_width==40 ? 1 : 0;
-                onCurrentIndexChanged: {
-                    //const chan_w= currentIndex==0 ? 20 : 40;
-                    //set_channel_width_async(20)
-                }
-                TabButton{
-                    text: "20Mhz"
-                    onClicked: {
-                        set_channel_width_async(20)
-                    }
-                }
-                TabButton{
-                    text: "40Mhz"
-                    onClicked: {
-                        set_channel_width_async(40)
-                    }
-                }
-            }*/
         Row{
             width: parent.width
             height: m_row_height
@@ -502,7 +480,7 @@ Make the video more stable (less microfreezes) on the cost of less image quality
                 styleColor: settings.color_glow
                 visible: settings.wb_link_rate_control_widget_show_fec_and_keyframe
             }
-            Text{
+            /*Text{
                 width: parent.width
                 height: 14
                 color: settings.color_warn
@@ -519,7 +497,7 @@ Make the video more stable (less microfreezes) on the cost of less image quality
                     }
                     return "";
                 }
-            }
+            }*/
 
         }
     }

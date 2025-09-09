@@ -1,7 +1,7 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
-import QtGraphicalEffects 1.12
+
 import Qt.labs.settings 1.0
 
 import OpenHD 1.0
@@ -17,7 +17,7 @@ BaseWidget {
     defaultYOffset: 128
     dragging: false
 
-    visible: settings.show_speed_second
+    visible: settings.show_speed_second && !sidebar.m_is_active
 
     widgetIdentifier: "speed_second_widget"
     bw_verbose_name: "SECOND SPEED"
