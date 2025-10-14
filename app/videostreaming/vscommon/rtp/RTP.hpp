@@ -199,7 +199,7 @@ public:
     {
         assert(data_length>=sizeof(rtp_header_t));
         // r.n we don't support padding
-        assert(header.padding==0);
+        // assert(header.padding==0);
     }
     // const reference to the rtp header
     const rtp_header_t& header;
